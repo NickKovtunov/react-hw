@@ -1,5 +1,6 @@
 import './App.css';
 import { useState } from "react";
+import {connect} from 'react-redux'
 
 function App() {
   const [reviewer, setReviewer] = useState(null);
@@ -96,4 +97,10 @@ function App() {
   );
 }
 
-export default App;
+function mapStateToProps (state: any) {
+  return {
+    counter: state.counter
+  }
+}
+
+export default connect(mapStateToProps)(App);
