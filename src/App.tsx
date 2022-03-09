@@ -1,44 +1,40 @@
 import './App.css';
-import { useState } from "react";
-import {connect} from 'react-redux'
+import { useEffect, useState } from "react";
+import {connect} from 'react-redux';
 
-function App() {
-  const [reviewer, setReviewer] = useState(null);
-  const [login, setLogin] = useState("NewNadym");
-  const [repo, setRepo] = useState("NewNadym.github.io");
-  const [blackList, setBlackList] = useState("NewNadym");
-  const [contributors, setContributors] = useState("");
+function App(props: any) {
+  //useEffect(()=>console.log(props), [props]);
 
   function findReviewer() {
-    if (login && repo) {
-      fetch(`https://api.github.com/repos/${login}/${repo}/contributors`)
+    if (props.login && props.repo) {
+      fetch(`https://api.github.com/repos/${props.login}/${props.repo}/contributors`)
         .then((response) => response.json())
         .then((data) => {
           let c = ""
           data.forEach(function(item:any) {
             c = c + ' ' + item.login
           });
-          setContributors(c)
+          props.onChangeContributors(c)
           if (!data && data.length > 0) {
-            setReviewer(null);
+            props.onChangeReviewer(null);
             return;
           }
           const filtered = data
-            .filter((item:any) => !blackList
+            .filter((item:any) => !props.blackList
               .split(',').map((blackItem:any) => blackItem.trim())
               .includes(item.login)
             )
           if (filtered && filtered.length > 0) {
             const randomIndex = Math.floor(Math.random() * filtered.length);
-            setReviewer(filtered[randomIndex]);
+            props.onChangeReviewer(filtered[randomIndex]);
           } else {
-            setReviewer(null);
+            props.onChangeReviewer(null);
           }
         })
         .then((response) => {
-          localStorage.setItem('login', JSON.stringify(login));
-          localStorage.setItem('repo', JSON.stringify(repo));
-          localStorage.setItem('blackList', JSON.stringify(blackList));
+          localStorage.setItem('login', JSON.stringify(props.login));
+          localStorage.setItem('repo', JSON.stringify(props.repo));
+          localStorage.setItem('blackList', JSON.stringify(props.blackList));
         })
         .catch((error) => console.error(error));
     } else{
@@ -70,28 +66,28 @@ function App() {
         <input className='custom_input'
                 placeholder='login' 
                 name="login" 
-                value={login}
-                onChange={(e) => setLogin(e.target.value)}/>
+                value={props.login}
+                onChange={(e) => props.onChangeLogin(e.target.value)}/>
 
         <input className='custom_input'
                 placeholder='repo' 
                 name="repo" 
-                value={repo} 
-                onChange={(e) => setRepo(e.target.value)}/>
+                value={props.repo} 
+                onChange={(e) => props.onChangeRepo(e.target.value)}/>
 
         <input className='custom_input'
                 placeholder='blackList' 
                 name="blackList" 
-                value={blackList} 
-                onChange={(e) => setBlackList(e.target.value)}/>
+                value={props.blackList} 
+                onChange={(e) => props.onChangeBlackList(e.target.value)}/>
 
         <button className="btn" onClick={findReviewer}>Найти проверяющего</button>
         
         <h3>Результаты поиска</h3>
-        <User label={"Проверяющий"} user={reviewer}/>
+        <User label={"Проверяющий"} user={props.reviewer}/>
 
         <h3>Контрибьютеры репозитория</h3>
-        <p className='contributors'>{contributors}</p>
+        <p className='contributors'>{props.contributors}</p>
       </header>
     </div>
   );
@@ -99,8 +95,22 @@ function App() {
 
 function mapStateToProps (state: any) {
   return {
-    counter: state.counter
+    login: state.login,
+    repo: state.repo,
+    blackList: state.blackList,
+    reviewer: state.reviewer,
+    contributors: state.contributors,
   }
 }
 
-export default connect(mapStateToProps)(App);
+function mapDispatchToProps(dispatch: any){
+  return{
+    onChangeLogin: (login:any) => dispatch({type: 'ChangeLogin', payload: login}),
+    onChangeRepo: (repo:any) => dispatch({type: 'ChangeRepo', payload: repo}),
+    onChangeBlackList: (blackList:any) => dispatch({type: 'ChangeBlackList', payload: blackList}),
+    onChangeReviewer: (reviewer:any) => dispatch({type: 'ChangeReviewer', payload: reviewer}),
+    onChangeContributors: (contributors:any) => dispatch({type: 'ChangeContributors', payload: contributors}),
+  }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(App);
