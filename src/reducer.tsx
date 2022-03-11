@@ -4,9 +4,10 @@ const initialState = {
     blackList: "NewNadym",
     reviewer: null,
     contributors: null,
+    rawResult: null,
 }
 
-export default function reducer(state = initialState, action){
+export default function reducer(state = initialState, action:any){
     switch(action.type){
         case 'ChangeLogin':
             return {
@@ -28,6 +29,8 @@ export default function reducer(state = initialState, action){
             return {
                 ...state, contributors: action.payload
             }
+        case 'FetchData': 
+            return {...state, rawResult: action.payload}
         default:
             return state
     }
