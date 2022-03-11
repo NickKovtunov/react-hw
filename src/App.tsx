@@ -7,7 +7,8 @@ function App(props: any) {
 
   function findReviewer() {
     if (props.login && props.repo) {
-      fetch(`https://api.github.com/repos/${props.login}/${props.repo}/contributors`)
+      props.fetchData(props.login, props.repo, onSuccess);
+      /*fetch(`https://api.github.com/repos/${props.login}/${props.repo}/contributors`)
         .then((response) => response.json())
         .then((data) => {
           let c = ""
@@ -36,10 +37,39 @@ function App(props: any) {
           localStorage.setItem('repo', JSON.stringify(props.repo));
           localStorage.setItem('blackList', JSON.stringify(props.blackList));
         })
-        .catch((error) => console.error(error));
+        .catch((error) => console.error(error));*/
     } else{
       alert("Не заполнены необходимые поля ()")
     }
+  }
+
+  const onSuccess = (data: any) => {
+    let c = ""
+    data.forEach(function(item:any) {
+      c = c + ' ' + item.login
+    });
+    props.onChangeContributors(c)
+    if (!data && data.length > 0) {
+      props.onChangeReviewer(null);
+      return;
+    }
+    const filtered = data
+      .filter((item:any) => !props.blackList
+        .split(',').map((blackItem:any) => blackItem.trim())
+        .includes(item.login)
+      )
+    if (filtered && filtered.length > 0) {
+      const randomIndex = Math.floor(Math.random() * filtered.length);
+      props.onChangeReviewer(filtered[randomIndex]);
+    } else {
+      props.onChangeReviewer(null);
+    }
+
+    localStorage.setItem('login', JSON.stringify(props.login));
+    localStorage.setItem('repo', JSON.stringify(props.repo));
+    localStorage.setItem('blackList', JSON.stringify(props.blackList));
+
+    return data
   }
 
   function User(props:any) {
@@ -110,6 +140,13 @@ function mapDispatchToProps(dispatch: any){
     onChangeBlackList: (blackList:any) => dispatch({type: 'ChangeBlackList', payload: blackList}),
     onChangeReviewer: (reviewer:any) => dispatch({type: 'ChangeReviewer', payload: reviewer}),
     onChangeContributors: (contributors:any) => dispatch({type: 'ChangeContributors', payload: contributors}),
+    fetchData: (login: string, repo: string, onSuccess: any) => dispatch({
+      type: 'FetchData',
+      meta: {
+        type: 'api',
+        url: `https://api.github.com/repos/${login}/${repo}/contributors`,
+        onSuccess
+      }})
   }
 }
 
